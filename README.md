@@ -1,5 +1,7 @@
 # Capstone_Wipro
 
+GO TO THE MASTER BRANCH
+
 1) After downloading, open up the zip keep it ready.
 2) Database is already given, make the database in your system, probably workbench.
 3) Create a workspace in Eclipse or VSC.
