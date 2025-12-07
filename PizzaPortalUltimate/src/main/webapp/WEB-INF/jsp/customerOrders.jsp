@@ -1,0 +1,74 @@
+<%@ page contentType="text/html;charset=UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+
+<html>
+<head>
+    <title>Your Orders - My Pizzaria</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+</head>
+<body>
+
+<header class="app-header">
+    <div class="brand">My Pizzaria</div>
+    <nav class="nav-links">
+        <span>${sessionScope.customerName}</span>
+        <a href="${pageContext.request.contextPath}/dashboard">Home</a>
+        <a href="${pageContext.request.contextPath}/customerInfo">Profile</a>
+        <a href="${pageContext.request.contextPath}/customerOrders">Orders</a>
+        <a href="${pageContext.request.contextPath}/placeOrderPage">Place Order</a>
+        <a href="${pageContext.request.contextPath}/logout">Logout</a>
+   	 	<button id="themeToggle" class="btn btn-secondary">🌙 Dark Mode</button>
+    </nav>
+</header>
+
+<div class="page-wrapper">
+    <div class="card">
+        <div class="card-header">
+            <h2>Your Orders</h2>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                </tr>
+                <c:forEach var="o" items="${orders}">
+                    <tr>
+                        <td>${o.order_id}</td>
+                        <td>${o.order_date}</td>
+                        <td class="text-right">₹ ${o.total_amount}</td>
+                        <td>
+                            <span class="badge-status ${o.status}">${o.status}</span>
+                        </td>
+                    </tr>
+                </c:forEach>
+            </table>
+        </div>
+    </div>
+</div>
+<script>
+    const toggleBtn = document.getElementById("themeToggle");
+
+    if (localStorage.getItem("theme") === "dark") {
+        document.body.classList.add("dark");
+        toggleBtn.innerText = "☀️ Light Mode";
+    }
+
+    toggleBtn.addEventListener("click", () => {
+        document.body.classList.toggle("dark");
+
+        if (document.body.classList.contains("dark")) {
+            localStorage.setItem("theme", "dark");
+            toggleBtn.innerText = "☀️ Light Mode";
+        } else {
+            localStorage.setItem("theme", "light");
+            toggleBtn.innerText = "🌙 Dark Mode";
+        }
+    });
+</script>
+
+</body>
+</html>

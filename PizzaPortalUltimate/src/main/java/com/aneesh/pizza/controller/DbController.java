@@ -1,0 +1,266 @@
+package com.aneesh.pizza.controller;
+
+import jakarta.servlet.http.HttpSession;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+@Controller
+public class DbController {
+
+    private final JdbcTemplate jdbc;
+
+    public DbController(JdbcTemplate jdbc) {
+        this.jdbc = jdbc;
+    }
+
+    // Dashboard
+
+    @GetMapping({"/", "/dashboard"})
+    public String dashboard() {
+        return "dashboard";  // JSP decides based on session
+    }
+    //
+    private Integer getLoggedCustomerId(HttpSession session) {
+        Object cidObj = session.getAttribute("customerId");
+        if (cidObj == null) {
+            return null;
+        }
+        if (cidObj instanceof Number) {
+            return ((Number) cidObj).intValue();
+        }
+        try {
+            return Integer.parseInt(cidObj.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    //  Customer Info 
+
+    @GetMapping("/customerInfo")
+    public String viewCustomerInfo(HttpSession session, Model model) {
+        Integer customerId = getLoggedCustomerId(session);
+        if (customerId == null) {
+            return "redirect:/login";
+        }
+
+        try {
+            Map<String, Object> customer = jdbc.queryForMap(
+                    "SELECT customer_id, customer_name, phone, email, address FROM customers WHERE customer_id = ?",
+                    customerId
+            );
+            model.addAttribute("customer", customer);
+        } catch (Exception e) {
+            // if something goes wrong, just show page without info
+        }
+
+        return "customerInfo";
+    }
+    // Customer Orders + Items 
+
+    @GetMapping("/customerOrders")
+    public String customerOrders(HttpSession session, Model model) {
+        Object cid = session.getAttribute("customerId");
+        if (cid == null) return "redirect:/login";
+
+        String sqlOrders =
+            "SELECT * FROM orders WHERE customer_id=? ORDER BY order_date DESC";
+        List<Map<String, Object>> orders = jdbc.queryForList(sqlOrders, cid);
+
+        for (Map<String, Object> o : orders) {
+            Object oidObj = o.get("order_id");
+            if (oidObj == null) {
+                o.put("items", List.of());
+                continue;
+            }
+
+            int orderId = ((Number) oidObj).intValue();
+
+            String sqlItems =
+                "SELECT p.name AS pizza_name, oi.price, oi.quantity " +
+                "FROM order_items oi " +
+                "JOIN pizzas p ON oi.pizza_id = p.pizza_id " +
+                "WHERE oi.order_id = ?";
+
+            try {
+                List<Map<String, Object>> items = jdbc.queryForList(sqlItems, orderId);
+                o.put("items", items);
+            } catch (Exception e) {
+                o.put("items", List.of());
+            }
+        }
+
+        model.addAttribute("orders", orders);
+        return "customerOrders";
+    }
+
+    
+    @GetMapping("/customerInfo/edit")
+    public String showEditForm(HttpSession session, Model model) {
+        Integer customerId = getLoggedCustomerId(session);
+        if (customerId == null) {
+            return "redirect:/login";
+        }
+
+        Map<String, Object> customer = jdbc.queryForMap(
+                "SELECT customer_id, customer_name, phone, email, address FROM customers WHERE customer_id = ?",
+                customerId
+        );
+        model.addAttribute("customer", customer);
+
+        return "customerEdit";
+    }
+    
+    @PostMapping("/customerInfo/update")
+    public String updateCustomer(@RequestParam("customer_id") int customerId,
+                                 @RequestParam("customer_name") String name,
+                                 @RequestParam("phone") String phone,
+                                 @RequestParam("email") String email,
+                                 @RequestParam("address") String address,
+                                 HttpSession session) {
+
+        Integer loggedId = getLoggedCustomerId(session);
+        if (loggedId == null) {
+            return "redirect:/login";
+        }
+        if (!loggedId.equals(customerId)) {
+            // don’t allow editing someone else’s profile
+            return "redirect:/customerInfo";
+        }
+
+        jdbc.update(
+                "UPDATE customers SET customer_name = ?, phone = ?, email = ?, address = ? WHERE customer_id = ?",
+                name, phone, email, address, customerId
+        );
+
+        // update navbar name also
+        session.setAttribute("customerName", name);
+
+        return "redirect:/customerInfo";
+    }
+
+    //  Place Order PAGE 
+
+    @GetMapping("/placeOrderPage")
+    public String showPlaceOrderPage(HttpSession session, Model model) {
+        Object cid = session.getAttribute("customerId");
+        if (cid == null) return "redirect:/login";
+
+        String sql = "SELECT pizza_id, name, base_price FROM pizzas ORDER BY name";
+        model.addAttribute("pizzas", jdbc.queryForList(sql));
+
+        return "placeOrder";
+    }
+
+    //  Place Order ACTION 
+
+    @PostMapping("/placeOrder")
+    public String placeOrder(jakarta.servlet.http.HttpServletRequest request,
+                             HttpSession session,
+                             Model model) {
+
+        Object cidObj = session.getAttribute("customerId");
+        if (cidObj == null) {
+            return "redirect:/login";
+        }
+
+        int customerId = ((Number) cidObj).intValue();
+
+        try {
+            //read raw parameters
+            String[] pizzaIdParams = request.getParameterValues("pizzaId");
+            String[] qtyParams     = request.getParameterValues("qty");
+
+            if (pizzaIdParams == null || qtyParams == null) {
+                throw new RuntimeException("No pizzaId/qty parameters received from form.");
+            }
+
+            BigDecimal total = BigDecimal.ZERO;
+            List<Integer> finalPizzaIds = new ArrayList<>();
+            List<Integer> finalQtys     = new ArrayList<>();
+            List<BigDecimal> finalPrices = new ArrayList<>();
+
+            for (int i = 0; i < pizzaIdParams.length && i < qtyParams.length; i++) {
+                int pid = Integer.parseInt(pizzaIdParams[i]);
+                int q   = Integer.parseInt(qtyParams[i]);
+
+                if (q <= 0) {
+                    continue;
+                }
+
+                // your pizzas table: base_price
+                BigDecimal unitPrice = jdbc.queryForObject(
+                        "SELECT base_price FROM pizzas WHERE pizza_id = ?",
+                        BigDecimal.class,
+                        pid
+                );
+                if (unitPrice == null) {
+                    continue;
+                }
+
+                BigDecimal line = unitPrice.multiply(BigDecimal.valueOf(q));
+                total = total.add(line);
+
+                finalPizzaIds.add(pid);
+                finalQtys.add(q);
+                finalPrices.add(unitPrice);
+            }
+
+            if (finalPizzaIds.isEmpty()) {
+                throw new RuntimeException("No pizzas selected (all quantities were 0).");
+            }
+
+            // insert into orders 
+            jdbc.update(
+                    "INSERT INTO orders (customer_id, order_date, status, total_amount) " +
+                    "VALUES (?, NOW(), ?, ?)",
+                    customerId,
+                    "Pending",
+                    total
+            );
+
+            Integer orderId = jdbc.queryForObject("SELECT LAST_INSERT_ID()", Integer.class);
+
+            if (orderId != null) {
+                for (int i = 0; i < finalPizzaIds.size(); i++) {
+                    int pid = finalPizzaIds.get(i);
+                    int q   = finalQtys.get(i);
+                    BigDecimal unitPrice = finalPrices.get(i);
+
+                    jdbc.update(
+                            "INSERT INTO order_items (order_id, pizza_id, quantity, price) " +
+                            "VALUES (?,?,?,?)",
+                            orderId,
+                            pid,
+                            q,
+                            unitPrice
+                    );
+                }
+            }
+
+            return "redirect:/customerOrders";
+
+        } catch (Exception e) {
+            // 1) print full stack trace to console
+            e.printStackTrace();
+
+            String message = e.getClass().getSimpleName() + ": " + e.getMessage();
+            model.addAttribute("errorMessage", message);
+
+            
+            String sql = "SELECT pizza_id, name, base_price FROM pizzas ORDER BY name";
+            model.addAttribute("pizzas", jdbc.queryForList(sql));
+
+            return "placeOrder";
+        }
+    }
+}

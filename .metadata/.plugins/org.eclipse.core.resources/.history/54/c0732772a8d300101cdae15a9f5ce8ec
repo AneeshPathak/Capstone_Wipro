@@ -1,0 +1,37 @@
+# --- SERVER + JSP ---
+server.port=8086
+spring.mvc.view.prefix=/WEB-INF/jsp/
+spring.mvc.view.suffix=.jsp
+
+# --- DATABASE ---
+spring.datasource.url=jdbc:mysql://localhost:3306/pizza_store
+spring.datasource.username=root
+spring.datasource.password=Indianmaster@88
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# --- EUREKA CLIENT CONFIG ---
+spring.application.name=PizzaPortalUltimate
+
+# URL of your Eureka server
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+
+
+eureka.client.register-with-eureka=true
+eureka.client.fetch-registry=true
+
+
+eureka.instance.instance-id=${spring.application.name}:${server.port}
+
+# expose health + info over HTTP
+management.endpoints.web.exposure.include=health,info
+management.endpoint.health.show-details=never
+
+# Optional info that will appear under /actuator/info
+info.app.name=Pizza Portal Ultimate
+info.app.description=Pizza ordering portal registered with Eureka
+info.app.version=1.0.0
+
+info.app.name=Pizza Portal Ultimate
+info.app.description=Pizza ordering portal registered with Eureka
+info.app.version=1.0.0
+info.owner.name=Aneesh Pathak

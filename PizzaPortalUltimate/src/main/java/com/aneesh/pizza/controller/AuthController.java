@@ -1,0 +1,179 @@
+package com.aneesh.pizza.controller;
+
+import jakarta.servlet.http.HttpSession;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.Map;
+
+@Controller
+public class AuthController {
+
+    private final JdbcTemplate jdbc;
+
+    public AuthController(JdbcTemplate jdbc) {
+        this.jdbc = jdbc;
+    }
+
+    //  CUSTOMER LOGIN PAGE 
+
+    @GetMapping("/login")
+    public String showLoginForm(HttpSession session) {
+        // if already logged in as customer, go to dashboard
+        if (session.getAttribute("customerId") != null) {
+            return "redirect:/dashboard";
+        }
+        return "login";
+    }
+
+    // CUSTOMER LOGIN SUBMIT 
+
+    @PostMapping("/login")
+    public String doLogin(@RequestParam String username,
+                          @RequestParam String password,
+                          HttpSession session,
+                          Model model) {
+
+        try {
+            Map<String, Object> customer = jdbc.queryForMap(
+                    "SELECT * FROM customers WHERE username = ? AND password = ?",
+                    username, password
+            );
+
+            session.setAttribute("customerId", customer.get("customer_id"));
+            session.setAttribute("customerName", customer.get("customer_name"));
+
+            // if customer logs in, clear any admin session
+            session.removeAttribute("adminId");
+            session.removeAttribute("adminName");
+
+            return "redirect:/dashboard";
+
+        } catch (Exception e) {
+            model.addAttribute("error", "Invalid username or password.");
+            return "login";
+        }
+    }
+
+    // CUSTOMER REGISTRATION PAGE 
+
+    @GetMapping("/register")
+    public String showRegisterForm(HttpSession session) {
+        if (session.getAttribute("customerId") != null) {
+            return "redirect:/dashboard";
+        }
+        return "register";
+    }
+
+    // ====================== CUSTOMER REGISTRATION SUBMIT =============
+
+    @PostMapping("/register")
+    public String doRegister(@RequestParam("name") String name,
+                             @RequestParam("phone") String phone,
+                             @RequestParam("email") String email,
+                             @RequestParam("address") String address,
+                             @RequestParam("username") String username,
+                             @RequestParam("password") String password,
+                             Model model) {
+
+        // basic validation
+        if (name == null || name.isBlank() ||
+            username == null || username.isBlank() ||
+            password == null || password.isBlank()) {
+
+            model.addAttribute("error", "Name, username, and password are required.");
+            return "register";
+        }
+
+        // username uniqueness
+        Integer existing = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM customers WHERE username = ?",
+                Integer.class,
+                username
+        );
+        if (existing != null && existing > 0) {
+            model.addAttribute("error", "Username already exists.");
+            return "register";
+        }
+
+        //RANDOM customer_id between 1 and 9999, not repeated 
+        int customerId;
+        int attempts = 0;
+        while (true) {
+            customerId = (int) (Math.random() * 9999) + 1;  // 1..9999
+            Integer used = jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM customers WHERE customer_id = ?",
+                    Integer.class,
+                    customerId
+            );
+            if (used == null || used == 0) break;  // unique ID found
+
+            attempts++;
+            if (attempts > 20000) {
+                model.addAttribute("error", "Unable to generate a unique customer ID. Please try again.");
+                return "register";
+            }
+        }
+
+        // insert new customer
+        jdbc.update(
+                "INSERT INTO customers (customer_id, customer_name, phone, email, address, username, password) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                customerId, name, phone, email, address, username, password
+        );
+
+        model.addAttribute("success", "Registration successful. Please login.");
+        return "login";
+    }
+
+    //  ADMIN LOGIN PAGE 
+
+    @GetMapping("/admin/login")
+    public String showAdminLogin(HttpSession session) {
+        if (session.getAttribute("adminId") != null) {
+            return "redirect:/admin/dashboard";
+        }
+        return "adminLogin";
+    }
+
+    // ADMIN LOGIN SUBMIT
+
+    @PostMapping("/admin/login")
+    public String doAdminLogin(@RequestParam String username,
+                               @RequestParam String password,
+                               HttpSession session,
+                               Model model) {
+
+        try {
+            Map<String, Object> admin = jdbc.queryForMap(
+                    "SELECT * FROM admin WHERE username = ? AND password = ? AND admin_status = 'YES'",
+                    username, password
+            );
+
+            session.setAttribute("adminId", admin.get("admin_id"));
+            session.setAttribute("adminName", admin.get("admin_name"));
+
+            // clear any customer session
+            session.removeAttribute("customerId");
+            session.removeAttribute("customerName");
+
+            return "redirect:/admin/dashboard";
+
+        } catch (Exception e) {
+            model.addAttribute("error", "Invalid admin credentials.");
+            return "adminLogin";
+        }
+    }
+
+    //  LOGOUT (BOTH) 
+
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "redirect:/dashboard";
+    }
+}

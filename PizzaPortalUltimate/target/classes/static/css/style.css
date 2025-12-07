@@ -1,0 +1,301 @@
+/* ========== THEME VARIABLES ========== */
+:root {
+    --bg-color: #f3f4f6;
+    --text-color: #111827;
+    --heading-color: #111827;
+    --header-bg: #b91c1c;
+    --header-text-color: #ffffff;
+    --card-bg: #ffffff;
+    --table-border: #e5e7eb;
+    --table-head-bg: #f9fafb;
+    --table-alt-row-bg: #f9fafb;
+    --header-nav-text: #ffe4e6;
+}
+
+body.dark {
+    --bg-color: #111827;
+    --text-color: #e5e7eb;
+    --heading-color: #f9fafb;
+    --header-bg: #7f1d1d;
+    --header-text-color: #ffe4e6;
+    --card-bg: #1e293b;
+    --table-border: #374151;
+    --table-head-bg: #1f2937;
+    --table-alt-row-bg: #1e293b;
+    --header-nav-text: #ffe4e6;
+}
+
+/* ========== Base ========== */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        Helvetica, Arial, sans-serif;
+    background: var(--bg-color);
+    color: var(--text-color);
+}
+
+/* Links */
+a {
+    color: #2563eb;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+
+/* Headings */
+h1, h2, h3 {
+    margin-top: 0;
+    color: var(--heading-color);
+}
+
+/* ========== Header / Navigation ========== */
+
+.app-header {
+    background: var(--header-bg); /* dark red */
+    color: var(--header-text-color);
+    padding: 10px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.app-header .brand {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.app-header .nav-links {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    font-size: 14px;
+}
+
+.app-header .nav-links a,
+.app-header .nav-links span {
+    color: var(--header-nav-text);
+}
+
+.app-header .nav-links a:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+/* ========== Layout ========== */
+
+.page-wrapper {
+    max-width: 1100px;
+    margin: 24px auto 40px;
+    padding: 0 16px;
+}
+
+.card {
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 20px 24px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.09);
+}
+
+/* For auth pages (login/register) */
+.page-auth {
+    max-width: 420px;
+}
+
+/* Card header row */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+}
+
+/* ========== Forms ========== */
+
+.form-row {
+    margin-bottom: 12px;
+}
+
+.form-row label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 4px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.form-row input[type="text"],
+.form-row input[type="password"],
+.form-row input[type="number"],
+.form-row input[type="email"] {
+    width: 100%;
+    padding: 7px 9px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    font-size: 14px;
+}
+
+.form-row input[type="number"] {
+    max-width: 120px;
+}
+
+/* ========== Buttons ========== */
+
+.btn {
+    display: inline-block;
+    padding: 7px 16px;
+    border-radius: 999px;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.btn-primary {
+    background: #b91c1c;
+    color: #ffffff;
+}
+.btn-primary:hover {
+    background: #991b1b;
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: #ffffff;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+.btn-secondary:hover {
+    background: #fff7ed;
+}
+
+.btn-danger {
+    background: #dc2626;
+    color: #ffffff;
+}
+.btn-danger:hover {
+    background: #b91c1c;
+}
+
+.btn-sm {
+    padding: 4px 10px;
+    font-size: 12px;
+}
+
+/* ========== Tables ========== */
+
+.table-wrapper {
+    overflow-x: auto;
+    margin-top: 12px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+/* HEADERS */
+th {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--table-border);
+    background: var(--table-head-bg);
+    font-weight: 600;
+    color: var(--heading-color);
+}
+
+/* CELLS */
+td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--table-border);
+    color: var(--text-color) !important;
+}
+
+/* EVEN ROWS */
+tr:nth-child(even) td {
+    background: var(--table-alt-row-bg);
+    opacity: 1;
+}
+
+/* ALIGN RIGHT */
+.text-right {
+    text-align: right;
+}
+
+/* ========== Status badges ========== */
+
+.badge-status {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.badge-status.Pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+.badge-status.Preparing {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+.badge-status.Delivered {
+    background: #dcfce7;
+    color: #166534;
+}
+.badge-status.Cancelled {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+/* ========== Messages ========== */
+
+.message-error {
+    color: #b91c1c;
+    margin-top: 6px;
+}
+.message-success {
+    color: #15803d;
+    margin-top: 6px;
+}
+
+.text-muted {
+    color: #6b7280;
+    font-size: 13px;
+}
+
+/* ========== Dashboard card grid ========== */
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-top: 18px;
+}
+
+.card-link {
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.12s ease-out, box-shadow 0.12s ease-out, background 0.12s ease-out;
+}
+
+.card-link:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+    background: #fef2f2; /* light pizza-ish highlight */
+}
+
+.page-title {
+    margin-bottom: 18px;
+}
+.page-title h2 {
+    margin-bottom: 4px;
+}

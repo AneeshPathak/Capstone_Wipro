@@ -1,0 +1,4 @@
+2025/12/08-00:50:48.476 86e0 Reusing MANIFEST D:\WiproSpring\.metadata\.plugins\org.eclipse.swt\EBWebView\Default\Session Storage/MANIFEST-000001
+2025/12/08-00:50:48.483 86e0 Recovering log #3
+2025/12/08-00:50:48.483 86e0 Level-0 table #3: started
+2025/12/08-00:50:48.483 86e0 Level-0 table #3: 0 bytes IO error: D:\WiproSpring\.metadata\.plugins\org.eclipse.swt\EBWebView\Default\Session Storage/000003.ldb: Unable to create writable file (ChromeMethodBFE: 9::NewWritableFile::16)
